@@ -2,8 +2,13 @@
 
 import 'dotenv/config';
 import * as readline from 'node:readline/promises';
+import { createAnthropic } from '@ai-sdk/anthropic';
+import { streamText, type ModelMessage } from 'ai';
+
 console.log('Hello from TypeScript CLI!');
 console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY);
+
+const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -20,10 +25,36 @@ const ANSI = {
 
 console.log("Chat with Claude (use 'ctrl-c' to quit)");
 
+const messages: ModelMessage[] = [
+  { role: 'system', content: 'You are a coding assistant.' },
+];
+
 async function main() {
   while (true) {
     const userInput = await rl.question(`${ANSI.Yellow}You${ANSI.Reset}: `);
     if (!userInput) continue;
+
+    messages.push({
+      role: 'user',
+      content: userInput,
+    });
+
+    const result = streamText({
+      model: anthropic('claude-sonnet-4-20250514'),
+      prompt: messages,
+    });
+
+    let assistant = '';
+    process.stdout.write(`${ANSI.Yellow}Claude${ANSI.Reset}: `);
+
+    for await (const chunk of result.textStream) {
+      assistant += chunk;
+      process.stdout.write(chunk);
+    }
+
+    console.log(); // newline
+
+    messages.push({ role: 'assistant', content: assistant });
   }
 }
 
