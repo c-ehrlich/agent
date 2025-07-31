@@ -3,7 +3,12 @@
 import 'dotenv/config';
 import * as readline from 'node:readline/promises';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { stepCountIs, streamText, type ModelMessage } from 'ai';
+import {
+  stepCountIs,
+  streamText,
+  type ModelMessage,
+  type TypedToolCall,
+} from 'ai';
 import { readFileTool } from './tools/read_file.js';
 
 console.log('Hello from TypeScript CLI!');
@@ -32,7 +37,7 @@ const messages: ModelMessage[] = [
 
 async function main() {
   while (true) {
-    const userInput = await rl.question(`${ANSI.Yellow}You${ANSI.Reset}: `);
+    const userInput = await rl.question(`${ANSI.Blue}You${ANSI.Reset}: `);
     if (!userInput) continue;
 
     messages.push({
@@ -40,24 +45,41 @@ async function main() {
       content: userInput,
     });
 
+    let needClaudePrefix = true;
+
+    const tools = { read_file: readFileTool };
+
     const result = streamText({
       model: anthropic('claude-sonnet-4-20250514'),
       prompt: messages,
-      tools: { read_file: readFileTool },
+      tools,
       stopWhen: stepCountIs(5),
+      onStepFinish({ toolCalls }: { toolCalls: TypedToolCall<any>[] }) {
+        // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (toolCalls.length) {
+          console.log(); // finish the assistant line
+          for (const call of toolCalls) {
+            console.log(
+              `${ANSI.Green}Tool${ANSI.Reset}: ${call.toolName}(${JSON.stringify(call.input)})`
+            );
+          }
+        }
+        needClaudePrefix = true; // next step gets its own prefix
+      },
     });
 
-    let assistant = '';
-    process.stdout.write(`${ANSI.Yellow}Claude${ANSI.Reset}: `);
-
     for await (const chunk of result.textStream) {
-      assistant += chunk;
+      if (needClaudePrefix) {
+        process.stdout.write(`${ANSI.Yellow}Claude${ANSI.Reset}: `);
+        needClaudePrefix = false;
+      }
       process.stdout.write(chunk);
     }
 
     console.log(); // newline
 
-    messages.push({ role: 'assistant', content: assistant });
+    const { messages: newMessages } = await result.response;
+    messages.push(...newMessages);
   }
 }
 
