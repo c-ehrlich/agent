@@ -6,6 +6,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { stepCountIs, streamText, type ModelMessage } from 'ai';
 import { readFileTool } from './tools/read_file.js';
 import { listFilesTool } from './tools/list_files.js';
+import { editFileTool } from './tools/edit_file.js';
 
 console.log('Hello from TypeScript CLI!');
 console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY);
@@ -43,7 +44,11 @@ async function main() {
 
     let needClaudePrefix = true;
 
-    const tools = { read_file: readFileTool, list_files: listFilesTool };
+    const tools = {
+      read_file: readFileTool,
+      list_files: listFilesTool,
+      edit_file: editFileTool,
+    };
 
     const result = streamText({
       model: anthropic('claude-sonnet-4-20250514'),
