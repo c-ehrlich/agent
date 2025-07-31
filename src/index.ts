@@ -3,7 +3,8 @@
 import 'dotenv/config';
 import * as readline from 'node:readline/promises';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { streamText, type ModelMessage } from 'ai';
+import { stepCountIs, streamText, type ModelMessage } from 'ai';
+import { readFileTool } from './tools/read_file.js';
 
 console.log('Hello from TypeScript CLI!');
 console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY);
@@ -26,7 +27,7 @@ const ANSI = {
 console.log("Chat with Claude (use 'ctrl-c' to quit)");
 
 const messages: ModelMessage[] = [
-  { role: 'system', content: 'You are a coding assistant.' },
+  // { role: 'system', content: 'You are a coding assistant.' },
 ];
 
 async function main() {
@@ -42,6 +43,8 @@ async function main() {
     const result = streamText({
       model: anthropic('claude-sonnet-4-20250514'),
       prompt: messages,
+      tools: { read_file: readFileTool },
+      stopWhen: stepCountIs(5),
     });
 
     let assistant = '';
