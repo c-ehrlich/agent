@@ -17,6 +17,9 @@ importers:
       dotenv:
         specifier: ^17.2.1
         version: 17.2.1
+      ignore:
+        specifier: ^7.0.5
+        version: 7.0.5
       zod:
         specifier: ^4.0.14
         version: 4.0.14

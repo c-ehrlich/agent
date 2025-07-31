@@ -3,13 +3,9 @@
 import 'dotenv/config';
 import * as readline from 'node:readline/promises';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import {
-  stepCountIs,
-  streamText,
-  type ModelMessage,
-  type TypedToolCall,
-} from 'ai';
+import { stepCountIs, streamText, type ModelMessage } from 'ai';
 import { readFileTool } from './tools/read_file.js';
+import { listFilesTool } from './tools/list_files.js';
 
 console.log('Hello from TypeScript CLI!');
 console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY);
@@ -47,23 +43,23 @@ async function main() {
 
     let needClaudePrefix = true;
 
-    const tools = { read_file: readFileTool };
+    const tools = { read_file: readFileTool, list_files: listFilesTool };
 
     const result = streamText({
       model: anthropic('claude-sonnet-4-20250514'),
       prompt: messages,
       tools,
       stopWhen: stepCountIs(5),
-      onStepFinish({ toolCalls }: { toolCalls: TypedToolCall<any>[] }) {
-        // eslint-disable-line @typescript-eslint/no-explicit-any
+      onStepFinish({ toolCalls }) {
         if (toolCalls.length) {
           console.log(); // finish the assistant line
           for (const call of toolCalls) {
             console.log(
-              `${ANSI.Green}Tool${ANSI.Reset}: ${call.toolName}(${JSON.stringify(call.input)})`
+              `${ANSI.Green}Tool${ANSI.Reset}: ${call.toolName}(${JSON.stringify(call)})`
             );
           }
         }
+        // console.log('tktk content', JSON.stringify(content));
         needClaudePrefix = true; // next step gets its own prefix
       },
     });
