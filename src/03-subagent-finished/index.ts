@@ -1,37 +1,34 @@
 #!/usr/bin/env node
 
-import './instrumentation.js';
 import 'dotenv/config';
-import * as readline from 'node:readline/promises';
+
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { withSpan, wrapAISDKModel, wrapTools } from '@axiomhq/ai';
 import { stepCountIs, streamText, type ModelMessage } from 'ai';
+import * as readline from 'node:readline/promises';
+import { v4 as uuidv4 } from 'uuid';
+
 import { readFileTool } from './tools/read_file.js';
 import { listFilesTool } from './tools/list_files.js';
 import { editFileTool } from './tools/edit_file.js';
 import { setupTracing } from './instrumentation.js';
-import { withSpan, wrapAISDKModel, wrapTools } from '@axiomhq/ai';
-import { v4 as uuidv4 } from 'uuid';
 import { blueText, greenText, yellowText } from './util/pretty-print.js';
-
-console.log('Hello from TypeScript CLI!');
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const tracer = setupTracing('agent-cli');
-const conversationId = uuidv4();
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-
-
 console.log("Chat with Claude (use 'ctrl-c' to quit)");
 
 const model = wrapAISDKModel(anthropic('claude-sonnet-4-20250514'));
+const conversationId = uuidv4();
 
 const messages: ModelMessage[] = [
-  // { role: 'system', content: 'You are a coding assistant.' },
+  { role: 'system', content: 'You are a coding assistant.' },
 ];
 
 async function main() {
@@ -63,7 +60,7 @@ async function main() {
               model,
               prompt: messages,
               tools,
-              stopWhen: stepCountIs(5),
+              stopWhen: stepCountIs(9),
               onStepFinish(step) {
                 const { toolCalls } = step;
                 if (toolCalls.length) {
@@ -108,7 +105,4 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\n\nError:', err);
-  process.exit(1);
-});
+main();
