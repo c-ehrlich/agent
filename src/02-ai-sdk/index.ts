@@ -11,6 +11,7 @@ import { editFileTool } from './tools/edit_file.js';
 import { setupTracing } from './instrumentation.js';
 import { withSpan, wrapAISDKModel, wrapTools } from '@axiomhq/ai';
 import { v4 as uuidv4 } from 'uuid';
+import { blueText, greenText, yellowText } from './util/pretty-print.js';
 
 console.log('Hello from TypeScript CLI!');
 
@@ -23,13 +24,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-const ANSI = {
-  Reset: '\x1b[0m',
-  ///////////////////
-  Blue: '\x1b[94m',
-  Green: '\x1b[92m',
-  Yellow: '\x1b[93m',
-};
+
 
 console.log("Chat with Claude (use 'ctrl-c' to quit)");
 
@@ -41,7 +36,7 @@ const messages: ModelMessage[] = [
 
 async function main() {
   while (true) {
-    const userInput = await rl.question(`${ANSI.Blue}You${ANSI.Reset}: `);
+    const userInput = await rl.question(`${blueText('You')}: `);
     if (!userInput) continue;
 
     await tracer.startActiveSpan('conversation.turn', async (span) => {
@@ -75,7 +70,7 @@ async function main() {
                   console.log(); // finish the assistant line
                   for (const call of toolCalls) {
                     console.log(
-                      `${ANSI.Green}Tool${ANSI.Reset}: ${call.toolName}(${JSON.stringify(call)})`
+                      `${greenText('Tool')}: ${call.toolName}(${JSON.stringify(call)})`
                     );
                   }
                 }
@@ -85,7 +80,7 @@ async function main() {
 
             for await (const chunk of result.textStream) {
               if (needClaudePrefix) {
-                process.stdout.write(`${ANSI.Yellow}Claude${ANSI.Reset}: `);
+                process.stdout.write(`${yellowText('Claude')}: `);
                 needClaudePrefix = false;
               }
               process.stdout.write(chunk);
