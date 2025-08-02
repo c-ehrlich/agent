@@ -13,7 +13,6 @@ import { withSpan, wrapAISDKModel, wrapTools } from '@axiomhq/ai';
 import { v4 as uuidv4 } from 'uuid';
 
 console.log('Hello from TypeScript CLI!');
-console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY);
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const tracer = setupTracing('agent-cli');
@@ -70,7 +69,8 @@ async function main() {
               prompt: messages,
               tools,
               stopWhen: stepCountIs(5),
-              onStepFinish({ toolCalls }) {
+              onStepFinish(step) {
+                const { toolCalls } = step;
                 if (toolCalls.length) {
                   console.log(); // finish the assistant line
                   for (const call of toolCalls) {
@@ -82,6 +82,7 @@ async function main() {
                 needClaudePrefix = true; // next step gets its own prefix
               },
             });
+
             for await (const chunk of result.textStream) {
               if (needClaudePrefix) {
                 process.stdout.write(`${ANSI.Yellow}Claude${ANSI.Reset}: `);

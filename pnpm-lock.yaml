@@ -54,6 +54,9 @@ importers:
       '@eslint/js':
         specifier: ^9.32.0
         version: 9.32.0
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
       '@types/node':
         specifier: ^24.1.0
         version: 24.1.0

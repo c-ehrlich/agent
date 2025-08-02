@@ -17,7 +17,8 @@
 - `src/` - TypeScript source files
 - `dist/` - Compiled JavaScript output
 - Node.js 22+ required
-- ESLint and Prettier configured separately (not through ESLint)
+- ESLint
+- Prettier configured separately (not through ESLint)
 
 ## Code Style
 
